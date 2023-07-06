@@ -28,17 +28,17 @@ class scale:
         ## The number of DBCells per DBWMU
         dbwmu_w = config.get(arch_sec, 'DBWMUWidth').split(',')
         self.dbwmu_w = dbwmu_w[0].strip()
-        print("dbwmu: " + self.dbwmu_w)
+        #print("dbwmu: " + self.dbwmu_w)
         
         ## The number of DBWMU per WMAU
         dbwmu_per_wmau = config.get(arch_sec, 'DBWMUPerWMAU').split(',')
         self.dbwmu_per_wmau = dbwmu_per_wmau[0].strip()
-        print("dbwmu_per_wmau: " + self.dbwmu_per_wmau)
+        #print("dbwmu_per_wmau: " + self.dbwmu_per_wmau)
 
         ## The number of WMAU per Macro
         num_wmau = config.get(arch_sec, 'NumOfWMAU').split(',')
         self.num_wmau = num_wmau[0].strip()
-        print("num_wmau: " + self.num_wmau)
+        #print("num_wmau: " + self.num_wmau)
 
         ## Read network_presets
         ## For now that is just the topology csv filename
@@ -55,9 +55,9 @@ class scale:
     def run_once(self):
 
         print("====================================================")
-        print("******************* SCALE SIM **********************")
+        print("******************* SRAM SIM **********************")
         print("====================================================")
-        print("DBWMU Width: \t" + str(self.dbwmu_w))
+        print("DBWMU Width   : \t" + str(self.dbwmu_w))
         print("DBWMU per WMAU: \t" + str(self.dbwmu_per_wmau))
         print("Number of WMAU: \t" + str(self.num_wmau))
         print("====================================================")
@@ -71,7 +71,7 @@ class scale:
                     net_name = net_name,
                     topology_file = self.topology_file   
                 )
-        print("************ SCALE SIM Run Complete ****************")
+        print("************ SRAM SIM Run Complete ****************")
 
 
 def main(argv):
