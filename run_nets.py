@@ -28,7 +28,7 @@ def conv_mapping(
     print("The numerber of rounds needed: " + str(num_rounds))
 
     # calculate the number of 9-WMAU SRAM needed
-    total_w_bits = filt_h * filt_w * num_channels * 8
+    total_w_bits = filt_h * filt_w * num_channels * num_filters * 8
     num_macro = math.ceil(total_w_bits / macro_sz)
     print("The numerber of 9-WMAU SRAM needed: " + str(num_macro))
 
@@ -56,7 +56,7 @@ def linear_mapping(
     macro_sz = dbwmu_w * dbwmu_per_wmau * num_wmau * 8
 
     # calculate the number of rounds needed
-    num_rounds = math.ceil(num_channels / total_mac)
+    num_rounds = math.ceil(num_channels / total_mac) * num_filters
     print("The numerber of rounds needed: " + str(num_rounds))
 
     # calculate the number of 9-WMAU SRAM needed
@@ -65,9 +65,10 @@ def linear_mapping(
     print("The numerber of 9-WMAU SRAM needed: " + str(num_macro))
 
     # calculate the 9-WMAU SRAM occupancy
-    sram_ocp = (num_channels * num_filters * 8) / macro_sz
+    sram_ocp = num_channels / total_mac
     if sram_ocp > 1:
         sram_ocp =1
+
     print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
     
 def run_net( dbwmu_w=128,
@@ -95,7 +96,6 @@ def run_net( dbwmu_w=128,
             continue
         """    
         elems = row.strip().split(',')
-        print("row: " + elems[0])
         
         # Do not continue if incomplete line
         if len(elems) < 10:
@@ -108,10 +108,10 @@ def run_net( dbwmu_w=128,
         ifmap_h = int(elems[1])
         ifmap_w = int(elems[2])
 
-        filt_h = int(elems[3])
-        filt_w = int(elems[4])
+        filt_h = int(elems[4])
+        filt_w = int(elems[5])
 
-        num_channels = int(elems[5])
+        num_channels = int(elems[3])
         num_filters = int(elems[6])
 
         padding = int(elems[7])
