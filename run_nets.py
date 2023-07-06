@@ -68,7 +68,7 @@ def linear_mapping(
     sram_ocp = num_channels / total_mac
     if sram_ocp > 1:
         sram_ocp =1
-
+    sram_ocp = round(sram_ocp,4)
     print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
     
 def run_net( dbwmu_w=128,
