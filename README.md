@@ -19,21 +19,21 @@ Getting started is simple! SCALE-Sim is completely written in python. At the mom
 
 The config file 9_wmau.cfg contains one section, achitecture presets  
 Here is sample of the config file.  
-![sample config](https://github.com/Liv928/sram-simulator/blob/master/images/9_wmau.png "sample config")    
+![sample config](https://github.com/Liv928/sram-simulator/blob/main/images/9_wmau.png "sample config")    
 Architecture presets are the variable parameters for SCALE-Sim, like array size, memory etc.  
   
 The simulator accepts topology csv in the format shown below.  
-![vgg16 topology](https://github.com/Liv928/sram-simulator/blob/master/images/vgg16.png "vgg16.csv")
+![vgg16 topology](https://github.com/Liv928/sram-simulator/blob/main/images/vgg16.png "vgg16.csv")
 
 Since this simulator is a CNN simulator please do not provide any layers other than convolutional or fully connected in the csv.
 You can take a look at 
-[vgg16.csv](https://github.com/Liv928/sram-simulator/blob/master/topologies/vgg16.csv)
+[vgg16.csv](https://github.com/Liv928/sram-simulator/blob/mainr/topologies/vgg16.csv)
 for your reference.
 
 ### Output
 
 Here is an example output dumped to stdout when running vgg16 (whose configuration is in vgg16.csv):
-![sample output](https://github.com/Liv928/sram-simulator/blob/master/images/sample_output.png "sample output")
+![sample output](https://github.com/Liv928/sram-simulator/blob/main/images/sample_output.png "sample output")
 
 
 
