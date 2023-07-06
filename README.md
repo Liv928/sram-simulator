@@ -36,6 +36,3 @@ Here is an example output dumped to stdout when running vgg16 (whose configurati
 ![sample output](https://github.com/Liv928/sram-simulator/blob/main/images/sample_output.png "sample output")
 
 
-
-## Detailed Documentation
-For detailed insights on using SCALE-Sim, you can refer to this [paper](https://arxiv.org/abs/1811.02883)
