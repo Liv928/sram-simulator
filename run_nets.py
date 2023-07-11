@@ -1,9 +1,76 @@
 import os
 import subprocess
 import math 
+def conv_mapping_is(dbwmu_w,
+                dbwmu_per_wmau,
+                num_wmau,
+                ifmap_h,
+                ifmap_w,
+                filt_h,
+                filt_w,
+                num_channels,
+                num_filters,
+                padding,
+                strides):
+    print("Calculating is mapping for 9-WMAU")
+    ofmap_h = ((ifmap_h - filt_h + 2*padding) / strides) + 1
+    ofmap_w = ((ifmap_w - filt_w + 2*padding) / strides) + 1
 
-def conv_mapping(
-                dbwmu_w,
+    macro_sz = dbwmu_w * dbwmu_per_wmau * num_wmau * 8
+
+    # calculate the number of rounds
+    if num_channels < dbwmu_w :
+        num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau)
+    else:
+        rounds_per_channel_wise = math.ceil(num_channels / dbwmu_w)
+        num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau) * rounds_per_channel_wise
+    print("The number of rounds needed: " + str(num_rounds))
+
+    # calculate the number of 9-WMAU SRAM needed
+    total_in_bits = ofmap_h* ofmap_w * filt_h * filt_w * num_channels * 8
+    num_macro = math.ceil(total_in_bits / macro_sz)
+    print("The number of 9-WMAU SRAM needed: " + str(num_macro))
+
+    # calculate the 9-WMAU SRAM occupancy
+    if num_channels > dbwmu_w:
+        sram_ocp = 1
+    else:
+        sram_ocp = num_channels / dbwmu_w
+    print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
+
+def conv_mapping_is_flex(
+                ifmap_h,
+                ifmap_w,
+                filt_h,
+                filt_w,
+                num_channels,
+                num_filters,
+                padding,
+                strides):
+    print("Calculating is mapping for customer config SRAM")
+    ofmap_h = ((ifmap_h - filt_h + 2*padding) / strides) + 1
+    ofmap_w = ((ifmap_w - filt_w + 2*padding) / strides) + 1
+    
+    # calculate the number of rounds
+    if num_channels <= 128 :
+        num_rounds = ofmap_h * ofmap_w * num_filters
+    else:
+        rounds_per_channel_wise = math.ceil(num_channels / 128)
+        num_rounds = ofmap_h * ofmap_w * num_filters * rounds_per_channel_wise
+    print("The number of rounds needed: " + str(num_rounds))
+
+    # calculate the number of DBWMU needed
+    num_dbwmu = ifmap_h * ifmap_w
+    print("The number of DBWMU needed: " + str(num_dbwmu))
+
+    # calculate the 9-WMAU SRAM occupancy
+    if num_channels > 128:
+        sram_ocp = 1
+    else:
+        sram_ocp = num_channels / 128
+    print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
+
+def conv_mapping_ws(dbwmu_w,
                 dbwmu_per_wmau,
                 num_wmau,
                 ifmap_h,
@@ -21,7 +88,7 @@ def conv_mapping(
 
     # calculate the number of rounds
     if num_channels < dbwmu_w :
-        num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau)
+        num_rounds = (ofmap_h * ofmap_w / dbwmu_per_wmau) * num_filters
     else:
         rounds_per_channel_wise = math.ceil(num_channels / dbwmu_w)
         num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau) * rounds_per_channel_wise
@@ -40,8 +107,7 @@ def conv_mapping(
     print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
     
 
-def linear_mapping(
-                dbwmu_w,
+def linear_mapping_ws(dbwmu_w,
                 dbwmu_per_wmau,
                 num_wmau,
                     ifmap_h,
@@ -120,9 +186,9 @@ def run_net( dbwmu_w=128,
         is_conv = int(elems[9])
 
         if is_conv :
-            conv_mapping(dbwmu_w, dbwmu_per_wmau, num_wmau, ifmap_h, ifmap_w, filt_h, filt_w, num_channels, num_filters, padding, strides)
+            conv_mapping_is(dbwmu_w, dbwmu_per_wmau, num_wmau, ifmap_h, ifmap_w, filt_h, filt_w, num_channels, num_filters, padding, strides)
         else:
-            linear_mapping(dbwmu_w, dbwmu_per_wmau, num_wmau, ifmap_h, ifmap_w, filt_h, filt_w, num_channels, num_filters, padding, strides)
+            linear_mapping_ws(dbwmu_w, dbwmu_per_wmau, num_wmau, ifmap_h, ifmap_w, filt_h, filt_w, num_channels, num_filters, padding, strides)
 
     param_file.close()
 
