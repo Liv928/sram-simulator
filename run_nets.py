@@ -192,7 +192,8 @@ def run_net( ary_w,
         is_conv = int(elems[9])
        
         for b in batches:
-           
+            print("!!calculate for batch size: "+ str(b))
+            # convolutional layer
             if is_conv==1:
                 ws_latency = conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
                 is_latency = conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
@@ -203,6 +204,7 @@ def run_net( ary_w,
                 worksheet.write(row_idx, col_idx, is_latency)
                 col_idx+=1
                 worksheet.write(row_idx, col_idx, recon_latency)
+            # linear layer
             elif is_conv==0:
                 ws_latency = linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
                 is_latency = linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
@@ -213,6 +215,7 @@ def run_net( ary_w,
                 worksheet.write(row_idx, col_idx, is_latency)
                 col_idx+=1
                 worksheet.write(row_idx, col_idx, recon_latency)
+            # depthwise
             else:
                 ws_latency = depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
                 is_latency =  depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
