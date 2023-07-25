@@ -1,160 +1,158 @@
 import os
 import subprocess
 import math 
-def conv_mapping_is(dbwmu_w,
-                dbwmu_per_wmau,
-                num_wmau,
-                ifmap_h,
-                ifmap_w,
-                filt_h,
-                filt_w,
-                num_channels,
-                num_filters,
-                padding,
-                strides):
-    print("Calculating is mapping for 9-WMAU")
-    ofmap_h = ((ifmap_h - filt_h + 2*padding) / strides) + 1
-    ofmap_w = ((ifmap_w - filt_w + 2*padding) / strides) + 1
+import xlwt
 
-    macro_sz = dbwmu_w * dbwmu_per_wmau * num_wmau * 8
 
-    # calculate the number of rounds
-    if num_channels < dbwmu_w :
-        num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau)
-    else:
-        rounds_per_channel_wise = math.ceil(num_channels / dbwmu_w)
-        num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau) * rounds_per_channel_wise
-    print("The number of rounds needed: " + str(num_rounds))
+def conv_ws(ary_w,
+            ary_h,
+            ifmap_h,
+            ifmap_w,
+            filt_h,
+            filt_w,
+            num_channels,
+            num_filters,
+            padding,
+            strides,
+            batch):
+    ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
+    ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
-    # calculate the number of 9-WMAU SRAM needed
-    total_in_bits = ofmap_h* ofmap_w * filt_h * filt_w * num_channels * 8
-    num_macro = math.ceil(total_in_bits / macro_sz)
-    print("The number of 9-WMAU SRAM needed: " + str(num_macro))
+    num_rounds = ofmap_h * ofmap_w
+   
+    num_write = math.ceil(num_channels / ary_w) * math.ceil((filt_h * filt_w * num_filters)/ary_h)
+  
+    conv_ws_latency = num_rounds * num_write * 2 * batch
 
-    # calculate the 9-WMAU SRAM occupancy
-    if num_channels > dbwmu_w:
-        sram_ocp = 1
-    else:
-        sram_ocp = num_channels / dbwmu_w
-    print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
+    print("conv ws latency: " + str(conv_ws_latency))
 
-def conv_mapping_is_flex(
-                ifmap_h,
-                ifmap_w,
-                filt_h,
-                filt_w,
-                num_channels,
-                num_filters,
-                padding,
-                strides):
-    print("Calculating is mapping for customer config SRAM")
-    ofmap_h = ((ifmap_h - filt_h + 2*padding) / strides) + 1
-    ofmap_w = ((ifmap_w - filt_w + 2*padding) / strides) + 1
+def conv_is(ary_w,
+            ary_h,
+            ifmap_h,
+            ifmap_w,
+            filt_h,
+            filt_w,
+            num_channels,
+            num_filters,
+            padding,
+            strides,
+            batch,
+            batch_per_write):
+    ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
+    ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
+
+    output_sz = ofmap_h * ofmap_w
+
+    conv_is_latency = math.ceil(num_channels / ary_w) * output_sz * num_filters * math.ceil(batch/batch_per_write) + num_filters
+  
+    print("conv is latency: " + str(conv_is_latency))
+
+def linear_ws(ary_w,
+            ary_h,
+            ifmap_h,
+            ifmap_w,
+            filt_h,
+            filt_w,
+            num_channels,
+            num_filters,
+            padding,
+            strides,
+            batch):
+    ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
+    ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
+
+    rows_per_vector = math.ceil(num_channels/ary_w)
+    num_writes = math.ceil((rows_per_vector * num_filters)/ary_h)
     
-    # calculate the number of rounds
-    if num_channels <= 128 :
-        num_rounds = ofmap_h * ofmap_w * num_filters
-    else:
-        rounds_per_channel_wise = math.ceil(num_channels / 128)
-        num_rounds = ofmap_h * ofmap_w * num_filters * rounds_per_channel_wise
-    print("The number of rounds needed: " + str(num_rounds))
+    num_input_reads = math.ceil(num_channels/(ary_h*ary_w))
 
-    # calculate the number of DBWMU needed
-    num_dbwmu = ifmap_h * ifmap_w
-    print("The number of DBWMU needed: " + str(num_dbwmu))
+    linear_ws_latency = (num_writes + num_input_reads) * batch
 
-    # calculate the 9-WMAU SRAM occupancy
-    if num_channels > 128:
-        sram_ocp = 1
-    else:
-        sram_ocp = num_channels / 128
-    print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
+    print("linear ws latency: " + str(linear_ws_latency))
 
-def conv_mapping_ws(dbwmu_w,
-                dbwmu_per_wmau,
-                num_wmau,
-                ifmap_h,
-                ifmap_w,
-                filt_h,
-                filt_w,
-                num_channels,
-                num_filters,
-                padding,
-                strides):
-    ofmap_h = ((ifmap_h - filt_h + 2*padding) / strides) + 1
-    ofmap_w = ((ifmap_w - filt_w + 2*padding) / strides) + 1
+def linear_is(ary_w,
+            ary_h,
+            ifmap_h,
+            ifmap_w,
+            filt_h,
+            filt_w,
+            num_channels,
+            num_filters,
+            padding,
+            strides,
+            batch):
+    ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
+    ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
-    macro_sz = dbwmu_w * dbwmu_per_wmau * num_wmau * 8
-
-    # calculate the number of rounds
-    if num_channels < dbwmu_w :
-        num_rounds = (ofmap_h * ofmap_w / dbwmu_per_wmau) * num_filters
-    else:
-        rounds_per_channel_wise = math.ceil(num_channels / dbwmu_w)
-        num_rounds = ofmap_h * ofmap_w * (num_filters / dbwmu_per_wmau) * rounds_per_channel_wise
-    print("The numerber of rounds needed: " + str(num_rounds))
-
-    # calculate the number of 9-WMAU SRAM needed
-    total_w_bits = filt_h * filt_w * num_channels * num_filters * 8
-    num_macro = math.ceil(total_w_bits / macro_sz)
-    print("The numerber of 9-WMAU SRAM needed: " + str(num_macro))
-
-    # calculate the 9-WMAU SRAM occupancy
-    if num_channels > dbwmu_w:
-        sram_ocp = 1
-    else:
-        sram_ocp = num_channels / dbwmu_w
-    print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
+    rows_per_vector = math.ceil(num_channels/ary_w)
     
-
-def linear_mapping_ws(dbwmu_w,
-                dbwmu_per_wmau,
-                num_wmau,
-                    ifmap_h,
-                    ifmap_w,
-                    filt_h,
-                    filt_w,
-                    num_channels,
-                    num_filters,
-                    padding,
-                    strides):
-    total_mac = dbwmu_w * dbwmu_per_wmau * num_wmau
-    macro_sz = dbwmu_w * dbwmu_per_wmau * num_wmau * 8
-
-    # calculate the number of rounds needed
-    num_rounds = math.ceil(num_channels / total_mac) * num_filters
-    print("The numerber of rounds needed: " + str(num_rounds))
-
-    # calculate the number of 9-WMAU SRAM needed
-    total_w_bits = num_filters * num_channels * 8
-    num_macro = math.ceil(total_w_bits / macro_sz)
-    print("The numerber of 9-WMAU SRAM needed: " + str(num_macro))
-
-    # calculate the 9-WMAU SRAM occupancy
-    sram_ocp = num_channels / total_mac
-    if sram_ocp > 1:
-        sram_ocp =1
-    sram_ocp = round(sram_ocp,4)
-    print("The DBCells occupancy: " + str(sram_ocp*100) + "%")
+    num_writes = math.ceil(rows_per_vector*(batch/ary_h))
     
-def run_net( dbwmu_w=128,
-             dbwmu_per_wmau=4,
-             num_wmau=9,
-             topology_file = './topologies/vgg16.csv',
-             net_name='vgg16'
+    linear_is_latency = num_writes * num_filters * 2
+
+    print("linear is latency: " + str(linear_is_latency))
+
+def depthwise_ws(ary_w,
+            ary_h,
+            ifmap_h,
+            ifmap_w,
+            filt_h,
+            filt_w,
+            num_channels,
+            num_filters,
+            padding,
+            strides,
+            batch):
+    ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
+    ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
+   
+    depthwise_ws_latency = math.ceil((filt_h*filt_w)/ary_w) * math.ceil(num_filters/ary_h) * ofmap_h * ofmap_w * 2 * batch
+    
+    print("depthwise ws latency: " + str(depthwise_ws_latency))
+    return depthwise_ws_latency
+
+def depthwise_is(ary_w,
+            ary_h,
+            ifmap_h,
+            ifmap_w,
+            filt_h,
+            filt_w,
+            num_channels,
+            num_filters,
+            padding,
+            strides,
+            batch):
+    ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
+    ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
+    
+    depthwise_is_latency = math.ceil((ifmap_h*ifmap_w)/ary_w) * math.ceil((num_channels*batch)/ary_h) * ofmap_h *  ofmap_w + 1
+    
+    print("depthwise is latency: " + str(depthwise_is_latency))
+    return depthwise_is_latency
+
+
+    
+def run_net( ary_w,
+             ary_h,
+             topology_file
             ):
-
     #fname = net_name + ".csv"
+    net_name = topology_file.split('/')[-1].split('.')[0]
+    wfname  = net_name + "_latency.xls"
+
+    # create new workbook
+    workbook = xlwt.Workbook(encoding= 'ascii')
+
+    # create new sheet
+    worksheet = workbook.add_sheet(net_name)
+
+    
+    batches = [1,4,16,64,256,1024,4096]
+
     param_file = open(topology_file, 'r')
-
-    # conv
-    macro_sz = 8 * dbwmu_w * dbwmu_per_wmau * num_wmau
-    # linear
-    total_mac = dbwmu_w * dbwmu_per_wmau * num_wmau
-
     # Used to skip the first line
     # first = True 
-    
+
     for row in param_file:
         """
         if first:
@@ -185,13 +183,23 @@ def run_net( dbwmu_w=128,
 
         is_conv = int(elems[9])
 
-        if is_conv :
-            conv_mapping_is(dbwmu_w, dbwmu_per_wmau, num_wmau, ifmap_h, ifmap_w, filt_h, filt_w, num_channels, num_filters, padding, strides)
-        else:
-            linear_mapping_ws(dbwmu_w, dbwmu_per_wmau, num_wmau, ifmap_h, ifmap_w, filt_h, filt_w, num_channels, num_filters, padding, strides)
+        for b in batches:
+            if is_conv==1:
+                ws_latency = conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
+                is_latency = conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
+                recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+            elif is_conv==0:
+                ws_latency = linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
+                is_latency = linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
+                recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+            else:
+                ws_latency = depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
+                is_latency =  depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
+                recon_latency = ws_latency if  ws_latency < is_latency else is_latency
 
+       
+        
     param_file.close()
 
-#if __name__ == "__main__":
-#    sweep_parameter_space_fast()    
+
 
