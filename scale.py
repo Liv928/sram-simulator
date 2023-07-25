@@ -5,6 +5,7 @@ import run_nets as r
 from absl import flags
 from absl import app
 
+
 FLAGS = flags.FLAGS
 #name of flag | default | explanation
 flags.DEFINE_string("arch_config","./configs/hw_config.cfg","file where we are getting our architechture from")
@@ -53,7 +54,7 @@ class scale:
         print("******************* SRAM SIM **********************")
         print("====================================================")
         print("Array Width   : \t" + str(self.ary_w))
-        print("Array Height: \t" + str(self.ary_h))
+        print("Array Height  : \t" + str(self.ary_h))
         print("====================================================")
 
         net_name = self.topology_file.split('/')[-1].split('.')[0]

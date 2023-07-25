@@ -25,6 +25,7 @@ def conv_ws(ary_w,
     conv_ws_latency = num_rounds * num_write * 2 * batch
 
     print("conv ws latency: " + str(conv_ws_latency))
+    return conv_ws_latency
 
 def conv_is(ary_w,
             ary_h,
@@ -46,6 +47,7 @@ def conv_is(ary_w,
     conv_is_latency = math.ceil(num_channels / ary_w) * output_sz * num_filters * math.ceil(batch/batch_per_write) + num_filters
   
     print("conv is latency: " + str(conv_is_latency))
+    return conv_is_latency
 
 def linear_ws(ary_w,
             ary_h,
@@ -69,6 +71,7 @@ def linear_ws(ary_w,
     linear_ws_latency = (num_writes + num_input_reads) * batch
 
     print("linear ws latency: " + str(linear_ws_latency))
+    return linear_ws_latency
 
 def linear_is(ary_w,
             ary_h,
@@ -91,6 +94,7 @@ def linear_is(ary_w,
     linear_is_latency = num_writes * num_filters * 2
 
     print("linear is latency: " + str(linear_is_latency))
+    return linear_is_latency
 
 def depthwise_ws(ary_w,
             ary_h,
@@ -146,6 +150,8 @@ def run_net( ary_w,
     # create new sheet
     worksheet = workbook.add_sheet(net_name)
 
+    row_idx=0
+    
     
     batches = [1,4,16,64,256,1024,4096]
 
@@ -153,12 +159,14 @@ def run_net( ary_w,
     # Used to skip the first line
     # first = True 
 
+   
     for row in param_file:
         """
         if first:
             first = False
             continue
-        """    
+        """ 
+        col_idx=0
         elems = row.strip().split(',')
         
         # Do not continue if incomplete line
@@ -182,23 +190,43 @@ def run_net( ary_w,
         strides = int(elems[8])
 
         is_conv = int(elems[9])
-
+       
         for b in batches:
+           
             if is_conv==1:
                 ws_latency = conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
                 is_latency = conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
                 recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+                
+                worksheet.write(row_idx, col_idx, ws_latency)
+                col_idx+=1
+                worksheet.write(row_idx, col_idx, is_latency)
+                col_idx+=1
+                worksheet.write(row_idx, col_idx, recon_latency)
             elif is_conv==0:
                 ws_latency = linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
-                is_latency = linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
-                recon_latency = ws_latency if  ws_latency < is_latency else is_latency
-            else:
-                ws_latency = depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
-                is_latency =  depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b, 128)
+                is_latency = linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
                 recon_latency = ws_latency if  ws_latency < is_latency else is_latency
 
-       
-        
+                worksheet.write(row_idx, col_idx, ws_latency)
+                col_idx+=1
+                worksheet.write(row_idx, col_idx, is_latency)
+                col_idx+=1
+                worksheet.write(row_idx, col_idx, recon_latency)
+            else:
+                ws_latency = depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
+                is_latency =  depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, b)
+                recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+               
+                worksheet.write(row_idx, col_idx, ws_latency)
+                col_idx+=1
+                worksheet.write(row_idx, col_idx, is_latency)
+                col_idx+=1
+                worksheet.write(row_idx, col_idx, recon_latency)
+            col_idx+=2
+        row_idx +=1
+
+    workbook.save(wfname)
     param_file.close()
 
 
