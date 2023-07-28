@@ -75,7 +75,7 @@ def linear_ws(ary_w,
 
     num_writes = math.ceil((rows_per_vector * num_filters * batch)/ary_h)
 
-    linear_ws_latency = num_writes * batch + num_writes
+    linear_ws_latency = num_writes + num_writes
 
     print("linear ws latency: " + str(linear_ws_latency))
     return linear_ws_latency
