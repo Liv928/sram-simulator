@@ -1,7 +1,3 @@
-## Formulas to calculate latency
-## Includes the rewrites time 
-## Not includes the read time of fetching inputs from buffer
-
 import os
 import subprocess
 import math 
@@ -17,7 +13,7 @@ def conv_ws(ary_w,
             padding,
             strides,
             batch):
-    print("updated with rewrites")
+    print("energy updated with rewrites")
     ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
     ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
@@ -25,10 +21,11 @@ def conv_ws(ary_w,
    
     num_writes = math.ceil(num_channels / ary_w) * math.ceil((filt_h * filt_w * num_filters)/ary_h)
   
-    conv_ws_latency = num_rounds * num_writes * batch + num_writes
+    conv_ws_latency = num_rounds * num_writes * batch * 2 + num_writes
+    conv_ws_energy =  conv_ws_latency * 3.84
 
-    print("conv ws latency: " + str(conv_ws_latency))
-    return conv_ws_latency
+    print("conv ws energy: " + str(conv_ws_energy))
+    return conv_ws_energy
 
 def conv_is(ary_w,
             ary_h,
@@ -52,10 +49,11 @@ def conv_is(ary_w,
     
     num_writes = math.ceil(num_channels / ary_w) * math.ceil(batch/batch_per_write) * (output_sz/ (conv_h*conv_w))
 
-    conv_is_latency = math.ceil(num_channels / ary_w) * output_sz * num_filters * math.ceil(batch/batch_per_write) +num_writes
-  
-    print("conv is latency: " + str(conv_is_latency))
-    return conv_is_latency
+    conv_is_latency = math.ceil(num_channels / ary_w) * output_sz * num_filters * math.ceil(batch/batch_per_write) +num_writes + num_filters
+    conv_is_energy = conv_is_latency * 3.84
+    
+    print("conv is energy: " + str(conv_is_energy))
+    return conv_is_energy
 
 def linear_ws(ary_w,
             ary_h,
@@ -74,10 +72,13 @@ def linear_ws(ary_w,
     rows_per_vector = math.ceil(num_channels/ary_w)
     num_writes = math.ceil((rows_per_vector * num_filters)/ary_h)
 
-    linear_ws_latency = num_writes * batch + num_writes
+    num_reads = math.ceil(num_channels / (ary_h*ary_w))
 
-    print("linear ws latency: " + str(linear_ws_latency))
-    return linear_ws_latency
+    linear_ws_latency = (num_writes + num_reads) * batch + num_writes
+    linear_ws_energy =  linear_ws_latency * 3.84
+
+    print("linear ws energy: " + str(linear_ws_energy))
+    return linear_ws_energy
 
 def linear_is(ary_w,
             ary_h,
@@ -97,10 +98,11 @@ def linear_is(ary_w,
     
     num_writes = math.ceil(rows_per_vector * (batch/ary_h))
     
-    linear_is_latency = num_writes * num_filters + num_writes
+    linear_is_latency = num_writes * num_filters * 2 + num_writes
+    linear_is_energy = linear_is_latency * 3.84
 
-    print("linear is latency: " + str(linear_is_latency))
-    return linear_is_latency
+    print("linear is energy: " + str(linear_is_energy))
+    return linear_is_energy
 
 def depthwise_ws(ary_w,
             ary_h,
@@ -116,14 +118,14 @@ def depthwise_ws(ary_w,
     ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
     ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
-    output_sz = ofmap_h * ofmap_w
-
     num_writes =  math.ceil((filt_h*filt_w)/ary_w) * math.ceil(num_filters/ary_h)
-   
-    depthwise_ws_latency = math.ceil((filt_h*filt_w)/ary_w) * math.ceil(num_filters/ary_h) * output_sz * batch + num_writes
+    num_rounds = ofmap_h * ofmap_w
     
-    print("depthwise ws latency: " + str(depthwise_ws_latency))
-    return depthwise_ws_latency
+    depthwise_ws_latency = math.ceil((filt_h*filt_w)/ary_w) * math.ceil(num_filters/ary_h) * num_rounds * batch * 2 + num_writes
+    depthwise_ws_energy = depthwise_ws_latency * 3.84
+    
+    print("depthwise ws energy: " + str(depthwise_ws_energy))
+    return depthwise_ws_energy
 
 def depthwise_is(ary_w,
             ary_h,
@@ -139,11 +141,10 @@ def depthwise_is(ary_w,
     ofmap_h = math.floor(((ifmap_h - filt_h + 2*padding) / strides)) + 1
     ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
-    output_sz = ofmap_h * ofmap_w
-
     num_writes = math.ceil((ifmap_h*ifmap_w)/ary_w) * math.ceil((num_channels*batch)/ary_h)
-    depthwise_is_latency = math.ceil((ifmap_h*ifmap_w)/ary_w) * math.ceil((num_channels*batch)/ary_h) * output_sz + num_writes
+    depthwise_is_latency = math.ceil((ifmap_h*ifmap_w)/ary_w) * math.ceil((num_channels*batch)/ary_h) * ofmap_h *  ofmap_w + num_writes +1
+    depthwise_is_energy = depthwise_is_latency * 3.84
     
-    print("depthwise is latency: " + str(depthwise_is_latency))
-    return depthwise_is_latency
+    print("depthwise is energy: " + str(depthwise_is_energy))
+    return depthwise_is_energy
 

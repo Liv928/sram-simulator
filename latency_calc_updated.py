@@ -1,4 +1,4 @@
-## Formulas to calculate latency
+## Formulas to calculate the latency of updated schema
 ## Includes the rewrites time 
 ## Not includes the read time of fetching inputs from buffer
 
@@ -22,10 +22,10 @@ def conv_ws(ary_w,
     ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
     num_rounds = ofmap_h * ofmap_w
-   
-    num_writes = math.ceil(num_channels / ary_w) * math.ceil((filt_h * filt_w * num_filters)/ary_h)
+    
+    num_writes = math.ceil(num_channels / ary_w) * math.ceil((filt_h * filt_w * num_filters * batch)/ary_h)
   
-    conv_ws_latency = num_rounds * num_writes * batch + num_writes
+    conv_ws_latency = num_rounds * num_writes + num_writes
 
     print("conv ws latency: " + str(conv_ws_latency))
     return conv_ws_latency
@@ -50,9 +50,9 @@ def conv_is(ary_w,
     conv_w = math.floor((math.sqrt(ary_h/batch_per_write) - filt_w)/strides)+1
     conv_h = math.floor((math.sqrt(ary_h/batch_per_write) - filt_h)/strides)+1
     
-    num_writes = math.ceil(num_channels / ary_w) * math.ceil(batch/batch_per_write) * (output_sz/ (conv_h*conv_w))
+    num_writes = math.ceil(num_channels / ary_w) * math.ceil((num_filters* batch)/batch_per_write) * (output_sz/ (conv_h*conv_w))
 
-    conv_is_latency = math.ceil(num_channels / ary_w) * output_sz * num_filters * math.ceil(batch/batch_per_write) +num_writes
+    conv_is_latency = math.ceil(num_channels / ary_w) * output_sz * math.ceil((num_filters * batch)/batch_per_write) +num_writes
   
     print("conv is latency: " + str(conv_is_latency))
     return conv_is_latency
@@ -72,7 +72,8 @@ def linear_ws(ary_w,
     ofmap_w = math.floor(((ifmap_w - filt_w + 2*padding) / strides)) + 1 
 
     rows_per_vector = math.ceil(num_channels/ary_w)
-    num_writes = math.ceil((rows_per_vector * num_filters)/ary_h)
+
+    num_writes = math.ceil((rows_per_vector * num_filters * batch)/ary_h)
 
     linear_ws_latency = num_writes * batch + num_writes
 
@@ -95,9 +96,9 @@ def linear_is(ary_w,
 
     rows_per_vector = math.ceil(num_channels/ary_w)
     
-    num_writes = math.ceil(rows_per_vector * (batch/ary_h))
+    num_writes = math.ceil(rows_per_vector * ((batch * num_filters)/ary_h))
     
-    linear_is_latency = num_writes * num_filters + num_writes
+    linear_is_latency = num_writes + num_writes
 
     print("linear is latency: " + str(linear_is_latency))
     return linear_is_latency

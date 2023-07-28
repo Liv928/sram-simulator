@@ -4,6 +4,8 @@ import math
 import xlwt
 import latency_calc as latency
 import energy_calc as energy
+import latency_calc_updated as latency_updated
+import energy_calc_updated as energy_updated
 
 
 def run_net(ary_w, ary_h, topology_file):
@@ -20,6 +22,7 @@ def run_net(ary_w, ary_h, topology_file):
     row_idx=0
     first = True
     for row in param_file:
+        
         if first:
             first = False
             continue
@@ -52,8 +55,8 @@ def run_net(ary_w, ary_h, topology_file):
 
         # conv layer
         if is_conv==1:
-            ws_calc = energy.conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_calc = energy.conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch, 128)
+            ws_calc = latency.conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc = latency.conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch, 128)
             recon_calc = ws_calc if  ws_calc < is_calc else is_calc
                 
             worksheet.write(row_idx, col_idx, ws_calc)
@@ -63,8 +66,8 @@ def run_net(ary_w, ary_h, topology_file):
             worksheet.write(row_idx, col_idx, recon_calc)
         # linear layer
         elif is_conv==0:
-            ws_calc = energy.linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_calc = energy.linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            ws_calc = latency.linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc = latency.linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
             recon_calc = ws_calc if  ws_calc < is_calc else is_calc
 
             worksheet.write(row_idx, col_idx, ws_calc)
@@ -74,8 +77,8 @@ def run_net(ary_w, ary_h, topology_file):
             worksheet.write(row_idx, col_idx, recon_calc)
         # depthwise
         else:
-            ws_calc = energy.depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_calc =  energy.depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            ws_calc = latency.depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc =  latency.depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
             recon_calc = ws_calc if  ws_calc < is_calc else is_calc
                
             worksheet.write(row_idx, col_idx, ws_calc)
@@ -83,13 +86,14 @@ def run_net(ary_w, ary_h, topology_file):
             worksheet.write(row_idx, col_idx, is_calc)
             col_idx+=1
             worksheet.write(row_idx, col_idx, recon_calc)
+        
         row_idx+=1
        
     workbook.save(wfname)
     param_file.close()
 
 
-# ============= calculate for fixed batch size e.g. [1, 16, 64, 256, 1024, 4096]
+# ============= calculate for fixed batch size e.g. [1, 16, 64, 256, 1024, 4096] =============
 def run_net_batchset( ary_w,
              ary_h,
              topology_file
