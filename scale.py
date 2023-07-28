@@ -8,7 +8,7 @@ from absl import app
 
 FLAGS = flags.FLAGS
 #name of flag | default | explanation
-flags.DEFINE_string("arch_config","./configs/hw_config.cfg","file where we are getting our architechture from")
+flags.DEFINE_string("arch_config","./configs/config.cfg","file where we are getting our architechture from")
 flags.DEFINE_string("network","./topologies/batch/vgg16_ff_KMN.csv","topology that we are reading")
 
 
@@ -36,10 +36,7 @@ class scale:
         self.ary_h = ary_h[0].strip()
        
 
-        ## Read network_presets
-        ## For now that is just the topology csv filename
-        #topology_file = config.get(net_sec, 'TopologyCsvLoc')
-        #self.topology_file = topology_file.split('"')[1]     #Config reads the quotes as wells
+        ## Set network topology files
         self.topology_file= FLAGS.network
 
 

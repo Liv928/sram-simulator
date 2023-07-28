@@ -6,13 +6,12 @@ import latency_calc as latency
 import energy_calc as energy
 
 
-def run_net( ary_w,
-             ary_h,
-             topology_file
-            ):
-    net_name = topology_file.split('/')[-1].split('.')[0]
-    wfname  = net_name + "_energy.xls"
+def run_net(ary_w, ary_h, topology_file):
 
+    net_name = topology_file.split('/')[-1].split('.')[0]
+    wfname  = net_name + "_latency.xls"
+
+    # create workbook
     workbook = xlwt.Workbook(encoding= 'ascii')
     worksheet = workbook.add_sheet(net_name)
     
@@ -53,49 +52,51 @@ def run_net( ary_w,
 
         # conv layer
         if is_conv==1:
-            ws_latency = energy.conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_latency = energy.conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch, 128)
-            recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+            ws_calc = energy.conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc = energy.conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch, 128)
+            recon_calc = ws_calc if  ws_calc < is_calc else is_calc
                 
-            worksheet.write(row_idx, col_idx, ws_latency)
+            worksheet.write(row_idx, col_idx, ws_calc)
             col_idx+=1
-            worksheet.write(row_idx, col_idx, is_latency)
+            worksheet.write(row_idx, col_idx, is_calc)
             col_idx+=1
-            worksheet.write(row_idx, col_idx, recon_latency)
+            worksheet.write(row_idx, col_idx, recon_calc)
         # linear layer
         elif is_conv==0:
-            ws_latency = energy.linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_latency = energy.linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+            ws_calc = energy.linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc = energy.linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            recon_calc = ws_calc if  ws_calc < is_calc else is_calc
 
-            worksheet.write(row_idx, col_idx, ws_latency)
+            worksheet.write(row_idx, col_idx, ws_calc)
             col_idx+=1
-            worksheet.write(row_idx, col_idx, is_latency)
+            worksheet.write(row_idx, col_idx, is_calc)
             col_idx+=1
-            worksheet.write(row_idx, col_idx, recon_latency)
+            worksheet.write(row_idx, col_idx, recon_calc)
         # depthwise
         else:
-            ws_latency = energy.depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_latency =  energy.depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            recon_latency = ws_latency if  ws_latency < is_latency else is_latency
+            ws_calc = energy.depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc =  energy.depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            recon_calc = ws_calc if  ws_calc < is_calc else is_calc
                
-            worksheet.write(row_idx, col_idx, ws_latency)
+            worksheet.write(row_idx, col_idx, ws_calc)
             col_idx+=1
-            worksheet.write(row_idx, col_idx, is_latency)
+            worksheet.write(row_idx, col_idx, is_calc)
             col_idx+=1
-            worksheet.write(row_idx, col_idx, recon_latency)
+            worksheet.write(row_idx, col_idx, recon_calc)
         row_idx+=1
        
     workbook.save(wfname)
     param_file.close()
-    
+
+
+# ============= calculate for fixed batch size e.g. [1, 16, 64, 256, 1024, 4096]
 def run_net_batchset( ary_w,
              ary_h,
              topology_file
             ):
     #fname = net_name + ".csv"
     net_name = topology_file.split('/')[-1].split('.')[0]
-    wfname  = net_name + "_energy.xls"
+    wfname  = net_name + "_latency.xls"
 
     # create new workbook
     workbook = xlwt.Workbook(encoding= 'ascii')
