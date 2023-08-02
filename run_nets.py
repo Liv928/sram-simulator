@@ -11,7 +11,7 @@ import energy_calc_updated as energy_updated
 def run_net(ary_w, ary_h, topology_file):
 
     net_name = topology_file.split('/')[-1].split('.')[0]
-    wfname  = net_name + "_latency.xls"
+    wfname  = net_name + "_energy_2.xls"
 
     # create workbook
     workbook = xlwt.Workbook(encoding= 'ascii')
@@ -55,8 +55,8 @@ def run_net(ary_w, ary_h, topology_file):
 
         # conv layer
         if is_conv==1:
-            ws_calc = latency_updated.conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_calc = latency_updated.conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch, 128)
+            ws_calc = energy_updated.conv_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc = energy_updated.conv_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch, 128)
             recon_calc = ws_calc if  ws_calc < is_calc else is_calc
                 
             worksheet.write(row_idx, col_idx, ws_calc)
@@ -66,8 +66,8 @@ def run_net(ary_w, ary_h, topology_file):
             worksheet.write(row_idx, col_idx, recon_calc)
         # linear layer
         elif is_conv==0:
-            ws_calc = latency_updated.linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_calc = latency_updated.linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            ws_calc = energy_updated.linear_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc = energy_updated.linear_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
             recon_calc = ws_calc if  ws_calc < is_calc else is_calc
 
             worksheet.write(row_idx, col_idx, ws_calc)
@@ -77,8 +77,8 @@ def run_net(ary_w, ary_h, topology_file):
             worksheet.write(row_idx, col_idx, recon_calc)
         # depthwise
         else:
-            ws_calc = latency_updated.depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
-            is_calc =  latency_updated.depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            ws_calc = energy_updated.depthwise_ws(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
+            is_calc =  energy_updated.depthwise_is(ary_w, ary_h, ifmap_h, ifmap_w, filt_h,  filt_w, num_channels, num_filters,padding, strides, batch)
             recon_calc = ws_calc if  ws_calc < is_calc else is_calc
                
             worksheet.write(row_idx, col_idx, ws_calc)

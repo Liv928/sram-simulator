@@ -9,17 +9,20 @@ Getting started is simple! SCALE-Sim is completely written in python. At the mom
 * math
 * configparser
 * tqdm
+* xlwt
 
 
 ### Custom Experiment
 
-* Fill in the config file, 9_wmau.cfg with proper values. 
+* Fill in the config file, config.cfg with proper values. 
+* In the run_nets.py file, modify the run_net() function, make sure you are invoking the calculation formulas from the correct files
+* In the scale.py file, set the network topology file
 * Run the command: ```python scale.py```
 * Wait for the run to finish
 
-The config file 9_wmau.cfg contains one section, achitecture presets  
+The config file config.cfg contains one section, achitecture presets  
 Here is sample of the config file.  
-![sample config](https://github.com/Liv928/sram-simulator/blob/main/images/9_wmau.png "sample config")    
+![sample config](https://github.com/Liv928/sram-simulator/blob/main/images/config.png "sample config")    
 Architecture presets are the variable parameters for SCALE-Sim, like array size, memory etc.  
   
 The simulator accepts topology csv in the format shown below.  
@@ -30,9 +33,10 @@ You can take a look at
 [vgg16.csv](https://github.com/Liv928/sram-simulator/blob/mainr/topologies/vgg16.csv)
 for your reference.
 
-### Output
 
-Here is an example output dumped to stdout when running vgg16 (whose configuration is in vgg16.csv):
-![sample output](https://github.com/Liv928/sram-simulator/blob/main/images/sample_output.png "sample output")
+### Formula files
+As shown in the picture, these four files contain the calculation formulas of Latency and Energy. The files 
+with "_updated" suffix contain formulas for 2-parallelism calculation.
+![formula files](https://github.com/Liv928/sram-simulator/blob/main/images/formula.png "formula file")
 
 
